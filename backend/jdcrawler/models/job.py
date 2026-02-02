@@ -10,17 +10,23 @@ class JobSite(str, Enum):
     WANTED = "wanted"
 
 
-class JobCreate(BaseModel):
+class JobBase(BaseModel):
     title: str
     company: str
-    url: HttpUrl
+    url: str
     site: JobSite
     location: str | None = None
     salary: str | None = None
-    posted_at: date | None = None
+    experience: str | None = None
+    posted_at: datetime | None = None
+    deadline: str | None = None
 
 
-class Job(JobCreate):
+class JobCreate(JobBase):
+    pass
+
+
+class Job(JobBase):
     id: int
     is_bookmarked: bool = False
     created_at: datetime

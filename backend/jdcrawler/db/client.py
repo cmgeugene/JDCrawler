@@ -57,7 +57,9 @@ class DatabaseClient:
             site=job_data.site,
             location=job_data.location,
             salary=job_data.salary,
+            experience=job_data.experience,
             posted_at=job_data.posted_at,
+            deadline=job_data.deadline,
             is_bookmarked=False,
             created_at=datetime.now(),
         )
@@ -153,7 +155,9 @@ class DatabaseClient:
             site=job.site,
             location=job.location,
             salary=job.salary,
+            experience=job.experience,
             posted_at=job.posted_at.date() if job.posted_at else None,
+            deadline=job.deadline,
             is_bookmarked=job.is_bookmarked,
             created_at=job.created_at,
         )

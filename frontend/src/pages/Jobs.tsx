@@ -86,17 +86,18 @@ export default function Jobs() {
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/30 text-xs uppercase font-medium text-muted-foreground/70 sticky top-0 backdrop-blur-md z-10">
               <tr>
-                <th className="px-6 py-4 font-mono w-[40%]">Position / Company</th>
-                <th className="px-6 py-4 font-mono w-[20%]">Location</th>
+                <th className="px-6 py-4 font-mono w-[30%]">Position / Company</th>
+                <th className="px-6 py-4 font-mono w-[15%]">Location</th>
+                <th className="px-6 py-4 font-mono w-[15%]">Experience</th>
                 <th className="px-6 py-4 font-mono w-[15%]">Site</th>
-                <th className="px-6 py-4 font-mono w-[15%]">Posted</th>
+                <th className="px-6 py-4 font-mono w-[15%]">Dates</th>
                 <th className="px-6 py-4 font-mono w-[10%] text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="h-64 text-center">
+                  <td colSpan={6} className="h-64 text-center">
                     <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       <span className="font-mono text-xs">Scanning frequencies...</span>
@@ -105,13 +106,13 @@ export default function Jobs() {
                 </tr>
               ) : isError ? (
                 <tr>
-                  <td colSpan={5} className="h-64 text-center text-destructive font-mono">
+                  <td colSpan={6} className="h-64 text-center text-destructive font-mono">
                     Connection interrupted. Please retry.
                   </td>
                 </tr>
               ) : jobs?.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="h-64 text-center text-muted-foreground font-mono">
+                  <td colSpan={6} className="h-64 text-center text-muted-foreground font-mono">
                     No signals found matching your criteria.
                   </td>
                 </tr>
@@ -139,6 +140,11 @@ export default function Jobs() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
+                      <div className="text-muted-foreground text-xs font-mono">
+                        {job.experience || "N/A"}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
                       <span className={cn(
                         "inline-flex items-center rounded-full px-2 py-1 text-[10px] font-medium ring-1 ring-inset uppercase tracking-wider",
                         job.site === 'saramin' ? "bg-blue-400/10 text-blue-400 ring-blue-400/20" : 
@@ -149,7 +155,17 @@ export default function Jobs() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-muted-foreground text-xs font-mono">
-                      {job.posted_at || job.created_at.split('T')[0]}
+                      <div className="flex flex-col gap-0.5">
+                        <span className={cn(
+                          "font-medium",
+                          job.deadline && (job.deadline.includes("오늘") || job.deadline.includes("내일")) ? "text-red-400" : ""
+                        )}>
+                          {job.deadline || "Open"}
+                        </span>
+                        <span className="text-[10px] opacity-70">
+                          {job.posted_at ? `Posted: ${job.posted_at}` : ''}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

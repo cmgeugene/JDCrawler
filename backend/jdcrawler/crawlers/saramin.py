@@ -25,15 +25,29 @@ class SaraminCrawler(BaseCrawler):
             
             # Location is usually the first span in job_condition
             condition_spans = card.select(".job_condition span")
-            location = condition_spans[0].get_text(strip=True) if condition_spans else None
             
-            # Salary search in conditions
+            location = None
+            experience = None
             salary = None
+
+            # Saramin usually follows: Location | Experience | Education | Type | Salary (optional)
+            # We iterate to find them by keywords or position
             for span in condition_spans:
                 text = span.get_text(strip=True)
-                if "만원" in text or "연봉" in text:
+                if not location and ("서울" in text or "경기" in text or "인천" in text or "부산" in text or "대구" in text or "광주" in text or "대전" in text or "울산" in text or "세종" in text or "강원" in text or "충북" in text or "충남" in text or "전북" in text or "전남" in text or "경북" in text or "경남" in text or "제주" in text or "전국" in text):
+                    location = text
+                elif not experience and ("신입" in text or "경력" in text or "무관" in text):
+                    experience = text
+                elif "만원" in text or "연봉" in text:
                     salary = text
-                    break
+            
+            # Fallback: if location wasn't found by keyword, take the first one
+            if not location and condition_spans:
+                 location = condition_spans[0].get_text(strip=True)
+
+            # Deadline extraction
+            deadline_elem = card.select_one(".job_date .date")
+            deadline = deadline_elem.get_text(strip=True) if deadline_elem else None
 
             if not title_elem or not company_elem:
                 continue
@@ -51,6 +65,8 @@ class SaraminCrawler(BaseCrawler):
                     site=JobSite.SARAMIN,
                     location=location,
                     salary=salary,
+                    experience=experience,
+                    deadline=deadline,
                 )
             )
 

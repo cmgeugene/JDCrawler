@@ -57,27 +57,28 @@ export default function Dashboard() {
                 dataKey="name"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 dy={10}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
               />
               <Tooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
+                cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
                 contentStyle={{
                   borderRadius: '0.5rem',
-                  border: '1px solid hsl(var(--border))',
-                  backgroundColor: 'hsl(var(--background))',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--background)',
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                 }}
               />
               <Bar
                 dataKey="value"
-                fill="hsl(var(--primary))"
+                fill="var(--chart-1)"
                 radius={[4, 4, 0, 0]}
+                barSize={48}
               />
             </BarChart>
           </ResponsiveContainer>

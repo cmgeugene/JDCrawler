@@ -39,6 +39,27 @@ class JobkoreaCrawler(BaseCrawler):
                 # Fallback for older layouts or if structure changes again
                 location_elem = card.select_one("div[class*='GrayChip'] span")
 
+            # Experience parsing
+            # JobKorea usually has options in a list-like structure in spans
+            experience = None
+            salary = None
+            
+            # Try to find experience in option tags
+            option_spans = card.select(".option span")
+            for span in option_spans:
+                text = span.get_text(strip=True)
+                if "신입" in text or "경력" in text or "무관" in text:
+                    experience = text
+                elif "만원" in text or "연봉" in text:
+                    salary = text
+            
+            # Deadline parsing
+            deadline_elem = card.select_one(".deadlines")
+            if not deadline_elem:
+                deadline_elem = card.select_one(".date")
+            
+            deadline = deadline_elem.get_text(strip=True) if deadline_elem else None
+
             link_elem = card.select_one("a[href*='/Recruit/GI_Read/']")
 
             if not title_elem or not company_elem or not link_elem:
@@ -56,7 +77,9 @@ class JobkoreaCrawler(BaseCrawler):
                     url=full_url,
                     site=JobSite.JOBKOREA,
                     location=location_elem.get_text(strip=True) if location_elem else None,
-                    salary=None,
+                    salary=salary,
+                    experience=experience,
+                    deadline=deadline,
                 )
             )
 

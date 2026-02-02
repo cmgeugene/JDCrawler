@@ -38,10 +38,13 @@ class WantedCrawler(BaseCrawler):
             )
 
             location = location_elem.get_text(strip=True) if location_elem else None
-            # Wanted search cards often show experience (e.g. "경력 3-5년") in the class named 'location'
-            # If it looks like experience, do not use it as location.
-            if location and (any(x in location for x in ["경력", "신입", "년"]) or location[0].isdigit()):
-                 location = None
+            experience = None
+            
+            # Wanted search cards often show experience (e.g. "경력 3-5년") in the class named 'location' or similar text nodes
+            # If the location text looks like experience, treat it as experience.
+            if location and (any(x in location for x in ["경력", "신입", "년"]) or (len(location) > 0 and location[0].isdigit())):
+                 experience = location
+                 location = None # Reset location if it was actually experience
 
             jobs.append(
                 JobCreate(
@@ -51,6 +54,7 @@ class WantedCrawler(BaseCrawler):
                     site=JobSite.WANTED,
                     location=location,
                     salary=None,
+                    experience=experience,
                 )
             )
 
@@ -61,13 +65,13 @@ class WantedCrawler(BaseCrawler):
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         async with httpx.AsyncClient(headers=headers, timeout=10.0) as client:
-            tasks = [self._fetch_location(client, job) for job in jobs]
+            tasks = [self._fetch_details(client, job) for job in jobs]
             return await asyncio.gather(*tasks)
 
-    async def _fetch_location(self, client: httpx.AsyncClient, job: JobCreate) -> JobCreate:
+    async def _fetch_details(self, client: httpx.AsyncClient, job: JobCreate) -> JobCreate:
         try:
-            # If location is already valid (unlikely given current logic), skip
-            if job.location:
+            # If we have everything, skip
+            if job.location and job.experience:
                 return job
 
             response = await client.get(job.url)
@@ -79,14 +83,38 @@ class WantedCrawler(BaseCrawler):
                 try:
                     data = json.loads(script.string)
                     if data.get("@type") == "JobPosting":
-                        address = data.get("jobLocation", {}).get("address", {})
-                        region = address.get("addressRegion", "")
-                        locality = address.get("addressLocality", "")
+                        # Location
+                        if not job.location:
+                            address = data.get("jobLocation", {}).get("address", {})
+                            region = address.get("addressRegion", "")
+                            locality = address.get("addressLocality", "")
+                            full_location = f"{region} {locality}".strip()
+                            if full_location:
+                                job.location = full_location
                         
-                        full_location = f"{region} {locality}".strip()
-                        if full_location:
-                            job.location = full_location
-                            break
+                        # Experience (often in requirements or description, but sometimes unstructured)
+                        # We can look for "experienceRequirements" if present, or parse description
+                        # Wanted specific: "qualifications" text often contains experience
+                        
+                        # Salary
+                        if not job.salary:
+                            base_salary = data.get("baseSalary", {})
+                            if isinstance(base_salary, dict):
+                                value = base_salary.get("value", {})
+                                if isinstance(value, dict):
+                                    min_sal = value.get("minValue")
+                                    max_sal = value.get("maxValue")
+                                    unit = value.get("unitText", "KRW")
+                                    if min_sal:
+                                        job.salary = f"{min_sal} - {max_sal} {unit}"
+                        
+                        # Deadline
+                        if not job.deadline:
+                            valid_through = data.get("validThrough")
+                            if valid_through:
+                                job.deadline = valid_through
+
+                        break
                 except (json.JSONDecodeError, AttributeError):
                     continue
             

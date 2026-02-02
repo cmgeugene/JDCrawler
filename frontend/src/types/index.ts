@@ -8,6 +8,8 @@ export interface Job {
   site: JobSite;
   location: string | null;
   salary: string | null;
+  experience: string | null;
+  deadline: string | null;
   posted_at: string | null;
   is_bookmarked: boolean;
   created_at: string;
