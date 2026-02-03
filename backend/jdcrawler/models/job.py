@@ -20,6 +20,12 @@ class JobBase(BaseModel):
     experience: str | None = None
     posted_at: datetime | None = None
     deadline: str | None = None
+    # AI Analysis
+    description: str | None = None
+    description_image_url: str | None = None
+    ai_score: int | None = None
+    ai_summary: str | None = None
+    ai_status: str = "pending"
 
 
 class JobCreate(JobBase):

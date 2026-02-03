@@ -29,3 +29,17 @@ export interface NewJobsCountResponse {
 export interface JobStatsResponse {
   [site: string]: number;
 }
+
+export interface TechSkill {
+  name: str;
+  level: string;
+  description: string | null;
+}
+
+export interface UserProfile {
+  tech_stack: TechSkill[];
+  experience_years: number;
+  interest_keywords: string[];
+  exclude_keywords: string[];
+  updated_at: string | null;
+}

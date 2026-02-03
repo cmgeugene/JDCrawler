@@ -12,9 +12,10 @@ class BaseCrawler(ABC):
         self,
         headless: bool = True,
         rate_limit_delay: float = 3.0,
+        jitter: float = 2.0,
     ):
         self.headless = headless
-        self.rate_limiter = RateLimiter(delay=rate_limit_delay)
+        self.rate_limiter = RateLimiter(delay=rate_limit_delay, jitter=jitter)
         self.browser: Browser | None = None
         self.playwright = None
 
@@ -22,13 +23,25 @@ class BaseCrawler(ABC):
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(
             headless=self.headless,
-            args=["--disable-blink-features=AutomationControlled"]
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-infobars",
+                "--window-position=0,0",
+                "--ignore-certificate-errors",
+            ]
         )
         self.context = await self.browser.new_context(
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            viewport={"width": 1920, "height": 1080},
+            viewport={"width": 1920, "height": 1080}, # Fixed large viewport
+            device_scale_factor=1,
             locale="ko-KR",
             timezone_id="Asia/Seoul",
+            extra_http_headers={
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+            }
         )
         return self
 
@@ -42,11 +55,11 @@ class BaseCrawler(ABC):
     async def crawl(self, keyword: str) -> list["JobCreate"]:
         pass
 
-    @retry(max_attempts=3, delay=1.0)
+    @retry(max_attempts=3, delay=2.0)
     async def fetch_page(
         self,
         url: str,
-        timeout: float = 60000,
+        timeout: float = 90000,
         wait_until: str = "domcontentloaded",
         wait_for_selector: str | None = None,
     ):

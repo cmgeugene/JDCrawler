@@ -1,5 +1,11 @@
 from contextlib import asynccontextmanager
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+# This will look in the current directory and also parent directories (project root)
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
+load_dotenv() # Fallback to local .env
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +15,7 @@ from jdcrawler.api.crawl import router as crawl_router
 from jdcrawler.api.jobs import router as jobs_router
 from jdcrawler.api.keywords import router as keywords_router
 from jdcrawler.api.notifications import router as notifications_router
+from jdcrawler.api.profile import router as profile_router
 from jdcrawler.db.client import DatabaseClient
 from jdcrawler.scheduler import scheduler, start_scheduler
 
@@ -56,6 +63,7 @@ app.include_router(keywords_router)
 app.include_router(notifications_router)
 app.include_router(crawl_router)
 app.include_router(analysis_router)
+app.include_router(profile_router)
 
 
 @app.get("/health")

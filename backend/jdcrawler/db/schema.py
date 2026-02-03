@@ -1,15 +1,15 @@
 from datetime import datetime
-
 from sqlalchemy import Boolean, DateTime, Enum, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
 from jdcrawler.models.job import JobSite
-
 
 class Base(DeclarativeBase):
     pass
 
+class UserBase(DeclarativeBase):
+    pass
 
+# --- Jobs Database Tables ---
 class JobTable(Base):
     __tablename__ = "jobs"
 
@@ -26,8 +26,15 @@ class JobTable(Base):
     is_bookmarked: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
+    # AI Analysis fields
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    description_image_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    ai_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    ai_summary: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    ai_status: Mapped[str] = mapped_column(String(20), default="pending")
 
-class KeywordTable(Base):
+# --- User Database Tables ---
+class KeywordTable(UserBase):
     __tablename__ = "keywords"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -35,8 +42,17 @@ class KeywordTable(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
+class ProfileTable(UserBase):
+    __tablename__ = "profile"
 
-class NotificationTable(Base):
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tech_stack: Mapped[str] = mapped_column(String(2000), default="[]")
+    experience_years: Mapped[int] = mapped_column(Integer, default=0)
+    interest_keywords: Mapped[str] = mapped_column(String(1000), default="[]")
+    exclude_keywords: Mapped[str] = mapped_column(String(1000), default="[]")
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+class NotificationTable(UserBase):
     __tablename__ = "notifications"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

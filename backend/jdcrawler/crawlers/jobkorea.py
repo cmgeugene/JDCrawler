@@ -5,8 +5,8 @@ from jdcrawler.models.job import JobCreate, JobSite
 
 
 class JobkoreaCrawler(BaseCrawler):
-    def __init__(self, headless: bool = True, rate_limit_delay: float = 3.0):
-        super().__init__(headless, rate_limit_delay)
+    def __init__(self, headless: bool = True, rate_limit_delay: float = 3.0, **kwargs):
+        super().__init__(headless, rate_limit_delay, **kwargs)
         self.base_url = "https://www.jobkorea.co.kr/Search"
 
     async def crawl(self, keyword: str) -> list[JobCreate]:
@@ -84,3 +84,55 @@ class JobkoreaCrawler(BaseCrawler):
             )
 
         return jobs
+
+    async def extract_details(self, url: str) -> dict:
+        try:
+            # JobKorea can be slow, wait for any significant element or the iframe itself
+            html = await self.fetch_page(url, wait_for_selector="body", timeout=30000)
+            soup = BeautifulSoup(html, "html.parser")
+            
+            description = ""
+            image_url = None
+            
+            # 1. Target the specific iframe identified by the user
+            # Pattern: /Recruit/GI_Read_Comt_Ifrm or Title: 상세 모집 요강
+            iframe = soup.select_one("iframe[src*='GI_Read_Comt_Ifrm']") or \
+                     soup.select_one("iframe[title='상세 모집 요강']") or \
+                     soup.select_one("#gib_frame")
+            
+            if iframe:
+                iframe_src = iframe.get("src")
+                if iframe_src:
+                    if not iframe_src.startswith("http"):
+                        iframe_src = "https://www.jobkorea.co.kr" + iframe_src
+                    
+                    # Fetch the iframe content
+                    # We use networkidle to ensure content inside iframe document is loaded
+                    iframe_html = await self.fetch_page(iframe_src, wait_until="networkidle")
+                    iframe_soup = BeautifulSoup(iframe_html, "html.parser")
+                    description = iframe_soup.get_text(separator="\n", strip=True)
+                    
+                    # Image extraction from within iframe
+                    img = iframe_soup.select_one("img")
+                    if img:
+                        image_url = img.get("src")
+            
+            # 2. Fallback to common content areas if iframe fails or is empty
+            if not description or len(description) < 100:
+                jd_elem = soup.select_one(".job-view-body") or soup.select_one(".cont") or \
+                          soup.select_one(".recruit-info") or soup.select_one(".detail-content")
+                
+                if jd_elem:
+                    description = jd_elem.get_text(separator="\n", strip=True)
+                    if not image_url:
+                        img = jd_elem.select_one("img")
+                        if img:
+                            image_url = img.get("src")
+
+            return {
+                "description": description,
+                "description_image_url": image_url
+            }
+        except Exception as e:
+            print(f"Error extracting JobKorea details: {e}")
+            return {"description": None, "description_image_url": None}

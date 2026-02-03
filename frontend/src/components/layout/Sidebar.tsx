@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Briefcase, Tag, X } from "lucide-react";
+import { LayoutDashboard, Briefcase, Tag, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -12,6 +12,7 @@ const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/jobs", label: "Jobs", icon: Briefcase, badge: "NEW" },
   { path: "/keywords", label: "Keywords", icon: Tag },
+  { path: "/profile", label: "Profile", icon: User },
 ];
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {

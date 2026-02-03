@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Search, MapPin, Building2, Bookmark, ExternalLink, ChevronLeft, ChevronRight, Loader2, Eye } from "lucide-react";
+import { Search, MapPin, Building2, Bookmark, ExternalLink, ChevronLeft, ChevronRight, Loader2, Eye, Sparkles } from "lucide-react";
 import { JobDetail } from "@/components/jobs/JobDetail";
 
 export default function Jobs() {
@@ -121,12 +121,25 @@ export default function Jobs() {
                   <tr key={job.id} className="group hover:bg-muted/20 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
-                        <button 
-                          onClick={() => setSelectedJobId(job.id)}
-                          className="font-medium text-foreground hover:text-primary transition-colors line-clamp-1 group-hover:underline decoration-primary/50 underline-offset-4 text-left"
-                        >
-                          {job.title}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => setSelectedJobId(job.id)}
+                            className="font-medium text-foreground hover:text-primary transition-colors line-clamp-1 group-hover:underline decoration-primary/50 underline-offset-4 text-left"
+                          >
+                            {job.title}
+                          </button>
+                          {job.ai_score !== null && job.ai_score !== undefined && (
+                            <span className={cn(
+                              "inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded border font-mono",
+                              job.ai_score >= 80 ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                              job.ai_score >= 50 ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" :
+                              "bg-red-500/10 text-red-500 border-red-500/20"
+                            )}>
+                              <Sparkles className="h-3 w-3" />
+                              {job.ai_score}%
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 text-muted-foreground text-xs">
                           <Building2 className="h-3 w-3" />
                           <span>{job.company}</span>

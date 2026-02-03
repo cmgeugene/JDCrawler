@@ -5,8 +5,8 @@ from jdcrawler.models.job import JobCreate, JobSite
 
 
 class SaraminCrawler(BaseCrawler):
-    def __init__(self, headless: bool = True, rate_limit_delay: float = 3.0):
-        super().__init__(headless, rate_limit_delay)
+    def __init__(self, headless: bool = True, rate_limit_delay: float = 3.0, **kwargs):
+        super().__init__(headless, rate_limit_delay, **kwargs)
         self.base_url = "https://www.saramin.co.kr/zf_user/search"
 
     async def crawl(self, keyword: str) -> list[JobCreate]:
@@ -71,3 +71,55 @@ class SaraminCrawler(BaseCrawler):
             )
 
         return jobs
+
+    async def extract_details(self, url: str) -> dict:
+        """
+        Fetch details from the job page.
+        """
+        try:
+            # Using fetch_page from base class
+            html = await self.fetch_page(url, wait_until="domcontentloaded")
+            soup = BeautifulSoup(html, "html.parser")
+            
+            # JD text often in .user_content, .wrap_jv_cont, or #recruit_info
+            # Some jobs use iframe, which is harder to crawl with simple fetch.
+            # We try common selectors first.
+            jd_elem = soup.select_one(".user_content") or soup.select_one("#recruit_info") or soup.select_one(".wrap_jv_cont")
+            
+            description = ""
+            image_url = None
+            
+            if jd_elem:
+                # 1. Try to get text
+                description = jd_elem.get_text(separator="\n", strip=True)
+                
+                # 2. Design for images: check for large images in the JD area
+                images = jd_elem.select("img")
+                for img in images:
+                    src = img.get("src", "")
+                    # Look for likely JD images (often large or in specific paths)
+                    if src and any(ext in src.lower() for ext in [".jpg", ".png", ".jpeg", ".gif"]):
+                        # Just take the first substantial-looking image as a candidate
+                        if "http" in src:
+                            image_url = src
+                            break
+            
+            # If description is very short, it's likely an image-only job
+            if len(description) < 200:
+                # Keep looking for images if not found
+                if not image_url:
+                    all_imgs = soup.select("img")
+                    # Heuristic for JD images
+                    for img in all_imgs:
+                         alt = img.get("alt", "")
+                         if "공고" in alt or "상세" in alt:
+                             image_url = img.get("src")
+                             break
+
+            return {
+                "description": description,
+                "description_image_url": image_url
+            }
+        except Exception as e:
+            print(f"Error extracting Saramin details: {e}")
+            return {"description": None, "description_image_url": None}

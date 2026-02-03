@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getKeywords, createKeyword, deleteKeyword } from "@/lib/api";
+import { getKeywords, createKeyword, deleteKeyword, crawlAll } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Trash2, Terminal, Activity, Loader2, AlertCircle, Search } from "lucide-react";
+import { Trash2, Terminal, Activity, Loader2, AlertCircle, Search, Play, Zap } from "lucide-react";
 import type { Keyword } from "@/types";
 
 export default function Keywords() {
@@ -26,6 +26,13 @@ export default function Keywords() {
     mutationFn: deleteKeyword,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["keywords"] });
+    },
+  });
+
+  const crawlMutation = useMutation({
+    mutationFn: crawlAll,
+    onSuccess: () => {
+      alert("Manual crawl started in the background for all keywords.");
     },
   });
 
@@ -53,9 +60,19 @@ export default function Keywords() {
               </p>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded bg-zinc-900/50 border border-zinc-800">
-            <Activity className="h-4 w-4 text-green-500" />
-            <span className="text-xs font-mono text-green-500">SYSTEM_ONLINE</span>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={() => crawlMutation.mutate()}
+              disabled={crawlMutation.isPending || keywords?.length === 0}
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded bg-green-500/10 border border-green-500/30 text-green-500 hover:bg-green-500/20 font-mono text-xs uppercase transition-all"
+            >
+              {crawlMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-3 w-3 fill-current" />}
+              Execute Crawl Now
+            </Button>
+            <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded bg-zinc-900/50 border border-zinc-800">
+              <Activity className="h-4 w-4 text-green-500" />
+              <span className="text-xs font-mono text-green-500">SYSTEM_ONLINE</span>
+            </div>
           </div>
         </div>
 
@@ -80,11 +97,21 @@ export default function Keywords() {
               {createMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Execute"
+                "Add Keyword"
               )}
             </Button>
           </div>
         </form>
+        
+        {/* Mobile Crawl Button */}
+        <Button
+          onClick={() => crawlMutation.mutate()}
+          disabled={crawlMutation.isPending || keywords?.length === 0}
+          className="md:hidden w-full mt-2 flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/30 text-green-500 font-mono text-xs uppercase"
+        >
+          {crawlMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-3 w-3 fill-current" />}
+          Execute Crawl Now
+        </Button>
       </div>
 
       {isLoading ? (

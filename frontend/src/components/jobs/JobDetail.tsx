@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Building2, MapPin, Calendar, ExternalLink, Bookmark, Globe, Loader2, DollarSign } from "lucide-react";
-import { getJob, toggleBookmark } from "@/lib/api";
+import { X, Building2, MapPin, Calendar, ExternalLink, Bookmark, Globe, Loader2, DollarSign, Sparkles, BrainCircuit, CheckCircle2, AlertCircle } from "lucide-react";
+import { getJob, toggleBookmark, analyzeJob } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +37,14 @@ export function JobDetail({ jobId, isOpen, onClose }: JobDetailProps) {
 
   const { mutate: handleToggleBookmark } = useMutation({
     mutationFn: toggleBookmark,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["job", jobId] });
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+
+  const { mutate: handleAnalyze, isPending: isAnalyzing } = useMutation({
+    mutationFn: () => analyzeJob(jobId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["job", jobId] });
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
@@ -99,6 +107,16 @@ export function JobDetail({ jobId, isOpen, onClose }: JobDetailProps) {
                       Bookmarked
                     </span>
                   )}
+                  {job.ai_status === 'completed' && (
+                    <span className={cn(
+                      "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset uppercase tracking-wider",
+                      job.ai_score >= 80 ? "bg-green-500/10 text-green-500 ring-green-500/20" :
+                      job.ai_score >= 50 ? "bg-yellow-500/10 text-yellow-500 ring-yellow-500/20" :
+                      "bg-red-500/10 text-red-500 ring-red-500/20"
+                    )}>
+                      AI: {job.ai_score}% Match
+                    </span>
+                  )}
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
                   {job.title}
@@ -107,6 +125,60 @@ export function JobDetail({ jobId, isOpen, onClose }: JobDetailProps) {
                   <Building2 className="h-5 w-5" />
                   <span className="font-medium">{job.company}</span>
                 </div>
+              </div>
+
+              {/* AI Analysis Section */}
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <h3 className="font-bold text-sm uppercase tracking-wider">AI Analysis</h3>
+                  </div>
+                  {job.ai_status !== 'completed' && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleAnalyze()}
+                      disabled={isAnalyzing || (!job.description && !job.description_image_url)}
+                      className="h-8 gap-2 bg-primary/20 text-primary hover:bg-primary/30 border border-primary/30"
+                    >
+                      {isAnalyzing ? <Loader2 className="h-3 w-3 animate-spin" /> : <BrainCircuit className="h-3 w-3" />}
+                      Run Analysis
+                    </Button>
+                  )}
+                </div>
+
+                {isAnalyzing ? (
+                  <div className="py-4 flex flex-col items-center justify-center gap-2 text-primary/70">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <p className="text-xs font-mono animate-pulse uppercase">Evaluating suitability with GLM-4...</p>
+                  </div>
+                ) : job.ai_status === 'completed' ? (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-end gap-3">
+                      <div className="text-4xl font-black text-primary">{job.ai_score}%</div>
+                      <div className="text-xs text-muted-foreground mb-1 uppercase font-mono tracking-tighter">Match Probability</div>
+                    </div>
+                    <div className="space-y-2">
+                      {job.ai_summary?.split('\n').map((line, i) => (
+                        <div key={i} className="flex gap-2 text-sm leading-relaxed text-foreground/80">
+                          <CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" />
+                          <span>{line.replace(/^[-\d.]\s*/, '')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : job.ai_status === 'filtered' ? (
+                  <div className="flex items-center gap-3 text-yellow-500/80 bg-yellow-500/5 p-3 rounded-lg border border-yellow-500/20">
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    <p className="text-xs font-mono">{job.ai_summary || "FILTERED_BY_RULE_ENGINE"}</p>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {(job.description || job.description_image_url) ? "Detailed analysis available via AI" : "No description data available for analysis"}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -10,6 +10,7 @@ try:
         print(f"Experience: {job.experience}")
         print(f"Salary: {job.salary}")
         print(f"Deadline: {job.deadline}")
+        print(f"Description length: {len(job.description) if job.description else 0}")
         print("-" * 20)
 finally:
     db.close()
