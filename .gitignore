@@ -80,4 +80,9 @@ logs/
 # Temporary
 tmp/
 temp/
-\n# Documents\n*.md\n\n# Local Agent State\n.sisyphus/
+
+# Local Agent State
+.sisyphus/
+
+# Markdown
+*.md
