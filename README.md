@@ -69,6 +69,17 @@ cp .env.example .env
 # Or manually: uvicorn jdcrawler.main:app --reload
 ```
 
+### 3. Frontend Setup
+```bash
+cd frontend
+
+# Install dependencies
+pnpm install
+
+# Run Development Server
+pnpm dev
+```
+
 ### 4. Docker Deployment (Recommended for Production)
 
 도커를 이용하면 복잡한 설치 과정 없이 백엔드와 프론트엔드를 한 번에 실행할 수 있습니다.
