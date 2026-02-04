@@ -1,0 +1,26 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "Job seeker")
+
+System_Boundary(c1, "JDCrawler") {
+    Container(spa, "Frontend App", "React, Vite, TypeScript", "Provides UI for dashboard and job details")
+    Container(api, "Backend API", "Python, FastAPI", "Handles API requests, orchestration")
+    Container(crawler, "Crawler Engine", "Playwright, BeautifulSoup", "Fetches and parses job data")
+    Container(scheduler, "Job Scheduler", "APScheduler", "Triggers periodic crawls")
+    ContainerDb(db, "Database", "SQLite (SQLAlchemy)", "Stores jobs, keywords, and profiles")
+}
+
+System_Ext(sites, "Target Sites", "Saramin, JobKorea, Wanted")
+System_Ext(ai, "AI Model", "Zhipu AI (GLM-4)")
+
+Rel(user, spa, "Uses", "HTTPS")
+Rel(spa, api, "API Calls", "JSON/HTTP")
+Rel(api, db, "Reads/Writes", "SQL")
+Rel(api, crawler, "Triggers", "Internal")
+Rel(scheduler, crawler, "Triggers periodically", "Internal")
+Rel(crawler, sites, "Scrapes", "HTTPS")
+Rel(crawler, db, "Saves job data", "SQL")
+Rel(api, ai, "Requests analysis", "HTTPS")
+
+@enduml

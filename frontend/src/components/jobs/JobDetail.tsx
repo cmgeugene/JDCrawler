@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { X, Building2, MapPin, Calendar, ExternalLink, Bookmark, Globe, Loader2, DollarSign, Sparkles, BrainCircuit, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Building2, MapPin, Calendar, ExternalLink, Bookmark, Globe, Loader2, DollarSign, Sparkles, BrainCircuit, AlertCircle } from "lucide-react";
 import { getJob, toggleBookmark, analyzeJob } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -107,7 +107,7 @@ export function JobDetail({ jobId, isOpen, onClose }: JobDetailProps) {
                       Bookmarked
                     </span>
                   )}
-                  {job.ai_status === 'completed' && (
+                  {job.ai_status === 'completed' && job.ai_score !== undefined && (
                     <span className={cn(
                       "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset uppercase tracking-wider",
                       job.ai_score >= 80 ? "bg-green-500/10 text-green-500 ring-green-500/20" :
@@ -158,13 +158,24 @@ export function JobDetail({ jobId, isOpen, onClose }: JobDetailProps) {
                       <div className="text-4xl font-black text-primary">{job.ai_score}%</div>
                       <div className="text-xs text-muted-foreground mb-1 uppercase font-mono tracking-tighter">Match Probability</div>
                     </div>
-                    <div className="space-y-2">
-                      {job.ai_summary?.split('\n').map((line, i) => (
-                        <div key={i} className="flex gap-2 text-sm leading-relaxed text-foreground/80">
-                          <CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" />
-                          <span>{line.replace(/^[-\d.]\s*/, '')}</span>
-                        </div>
-                      ))}
+                    <div className="space-y-3">
+                      {job.ai_summary?.split('\n').filter(line => line.trim()).map((line, i) => {
+                        // Simple parser for **bold** text
+                        const parts = line.split(/(\*\*.*?\*\*)/g);
+                        return (
+                          <div key={i} className="flex gap-2 text-sm leading-relaxed text-foreground/90 group">
+                            <div className="mt-1.5 h-1 w-1 rounded-full bg-primary/40 shrink-0 group-hover:bg-primary transition-colors" />
+                            <span className="flex-1">
+                              {parts.map((part, j) => {
+                                if (part.startsWith('**') && part.endsWith('**')) {
+                                  return <strong key={j} className="text-primary font-bold">{part.slice(2, -2)}</strong>;
+                                }
+                                return part;
+                              })}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : job.ai_status === 'filtered' ? (

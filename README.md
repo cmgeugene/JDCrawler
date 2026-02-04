@@ -69,16 +69,19 @@ cp .env.example .env
 # Or manually: uvicorn jdcrawler.main:app --reload
 ```
 
-### 3. Frontend Setup
+### 4. Docker Deployment (Recommended for Production)
+
+도커를 이용하면 복잡한 설치 과정 없이 백엔드와 프론트엔드를 한 번에 실행할 수 있습니다.
+
 ```bash
-cd frontend
+# 1. 환경 변수 설정
+cp .env.example .env
+# .env 파일을 열어 ZHIPU_API_KEY 등을 실제 키로 수정하세요.
 
-# Install dependencies
-pnpm install
-
-# Run Development Server
-pnpm dev
+# 2. 서비스 실행
+docker-compose up -d --build
 ```
+실행 후 브라우저에서 `http://localhost`에 접속하세요.
 
 ## 📁 Project Structure
 

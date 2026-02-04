@@ -95,14 +95,26 @@ Job Details:
 - Description: {job.description or "No detailed description available."}
 
 Task:
-1. Analyze the match between the candidate's skill levels and the job requirements.
-2. If a job requires "Expert" or "Lead" level in a skill where the candidate is a "Beginner", reflect this in the score.
-3. Consider the specific proficiency descriptions (e.g., "can distinguish variables/functions" means basic knowledge).
-4. Evaluate if the job matches the candidate's career interests (AX, AI, etc.).
-5. Provide a suitability score (0-100).
-6. Provide a summary in Korean (3-4 bullet points). Be honest about gaps in skill levels.
+You are a Senior Career Consultant. Analyze the fit between the candidate and this job posting with depth and insight.
+Do NOT just list matching keywords. Instead, evaluate the strategic fit, potential for growth, and alignment with the candidate's evident career direction.
 
-Return ONLY a JSON object: {{"score": number, "summary": "string"}}
+Analysis Guidelines:
+1. **Tech Stack Fit**: Analyze how the candidate's specific stack (e.g., if they know C++, how easy is it to pick up the job's requirements?) relates to the job. Look for foundational transferability.
+2. **Growth Potential**: Does this job offer a chance to expand into the candidate's interest areas (AI, AX)?
+3. **Gap Analysis**: Identify *critical* gaps versus *learnable* gaps. Be realistic but supportive.
+4. **Cultural/Strategic Fit**: Based on the job description's tone and requirements, does this seem like a place where the candidate would thrive?
+
+Output Format:
+Return a JSON object with:
+- "score": number (0-100, representing overall suitability)
+- "summary": string (A concise, professional assessment in Korean. Use markdown formatting like bolding for emphasis. Structure it as 3-4 distinct points: '✅ 강점', '⚠️ 고려사항', '💡 성장 포인트' etc.)
+
+Example Summary Style:
+"✅ **핵심 역량 일치**: 보유한 C++ 및 언리얼 엔진 경험은 해당 포지션의 코어 요구사항과 정확히 부합하며, 즉시 전력감이 될 수 있습니다.
+⚠️ **기술 스택 차이**: 백엔드 프레임워크 경험이 부족하나, 탄탄한 CS 지식을 바탕으로 빠르게 습득 가능한 수준입니다.
+💡 **커리어 기회**: 관심 있는 AI 분야와의 접점이 명확하여, 향후 AI 엔지니어로의 커리어 확장이 기대됩니다."
+
+Return ONLY the JSON object.
 """
         return prompt
 

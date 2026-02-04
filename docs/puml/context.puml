@@ -1,0 +1,17 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+Person(user, "User", "Job seeker looking for customized job postings")
+System(jdcrawler, "JDCrawler System", "Aggregates job postings, analyzes them with AI, and provides a dashboard")
+
+System_Ext(saramin, "Saramin", "Job Portal")
+System_Ext(jobkorea, "JobKorea", "Job Portal")
+System_Ext(wanted, "Wanted", "Job Portal")
+System_Ext(llm, "AI Service (Zhipu/GLM)", "Provides analysis and summarization")
+
+Rel(user, jdcrawler, "Views dashboard, manages keywords", "Web Browser")
+Rel(jdcrawler, saramin, "Crawls job data", "HTTPS")
+Rel(jdcrawler, jobkorea, "Crawls job data", "HTTPS")
+Rel(jdcrawler, wanted, "Crawls job data", "HTTPS")
+Rel(jdcrawler, llm, "Requests job analysis", "API")
+@enduml

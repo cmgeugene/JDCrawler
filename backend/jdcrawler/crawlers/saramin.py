@@ -11,7 +11,12 @@ class SaraminCrawler(BaseCrawler):
 
     async def crawl(self, keyword: str) -> list[JobCreate]:
         url = f"{self.base_url}?searchword={keyword}"
-        html = await self.fetch_page(url, wait_for_selector="div.item_recruit")
+        try:
+            # Using default wait_until (domcontentloaded) now that we have a display
+            html = await self.fetch_page(url, wait_for_selector="div.item_recruit")
+        except Exception:
+            # Fallback: ignore error and return empty or partial
+            return []
         return self._parse_jobs(html)
 
     def _parse_jobs(self, html: str) -> list[JobCreate]:

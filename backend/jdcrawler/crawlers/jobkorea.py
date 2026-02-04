@@ -25,44 +25,75 @@ class JobkoreaCrawler(BaseCrawler):
             title_elem = card.select_one("span[class*='Typography_variant_size18']")
             # Company is in a span with a slightly smaller variant size
             company_elem = card.select_one("span[class*='Typography_variant_size16']")
-            # Location often has an icon emoji--basicemoji-place2 next to it
-            # Structure: div(GrayChip) -> div -> div(emoji) ... span(text)
-            location_elem = None
-            place_emoji = card.select_one(".emoji--basicemoji-place2")
-            if place_emoji:
-                # Find the parent GrayChip
-                gray_chip = place_emoji.find_parent("div", attrs={"data-sentry-component": "GrayChip"})
-                if gray_chip:
-                    location_elem = gray_chip.select_one("span")
+            
+            if not title_elem or not company_elem:
+                continue
 
-            if not location_elem:
-                # Fallback for older layouts or if structure changes again
-                location_elem = card.select_one("div[class*='GrayChip'] span")
-
-            # Experience parsing
-            # JobKorea usually has options in a list-like structure in spans
+            # Initialize fields
+            location = None
             experience = None
             salary = None
+            deadline = None
+
+            # Strategy 1: Parse using JobInfoItem (New UI)
+            info_items = card.select("div[data-sentry-component='JobInfoItem']")
+            for item in info_items:
+                # Expecting 2 direct child divs: Label and Value
+                divs = item.find_all("div", recursive=False)
+                if len(divs) >= 2:
+                    label = divs[0].get_text(strip=True)
+                    value = divs[1].get_text(strip=True)
+                    
+                    if "경력" in label:
+                        experience = value
+                    elif "급여" in label:
+                        salary = value
+                    elif "근무지역" in label:
+                        location = value
+                    elif "마감일" in label:
+                        deadline = value
+
+            # Strategy 2: Fallbacks (Old UI or if Strategy 1 failed for some fields)
             
-            # Try to find experience in option tags
-            option_spans = card.select(".option span")
-            for span in option_spans:
-                text = span.get_text(strip=True)
-                if "신입" in text or "경력" in text or "무관" in text:
-                    experience = text
-                elif "만원" in text or "연봉" in text:
-                    salary = text
+            # Location Fallback
+            if not location:
+                place_emoji = card.select_one(".emoji--basicemoji-place2")
+                if place_emoji:
+                    # Find the parent GrayChip
+                    gray_chip = place_emoji.find_parent("div", attrs={"data-sentry-component": "GrayChip"})
+                    if gray_chip:
+                        location_span = gray_chip.select_one("span")
+                        if location_span:
+                            location = location_span.get_text(strip=True)
+
+                if not location:
+                    # Fallback for older layouts or if structure changes again
+                    loc_elem = card.select_one("div[class*='GrayChip'] span")
+                    if loc_elem:
+                        location = loc_elem.get_text(strip=True)
+
+            # Experience & Salary Fallback
+            if not experience or not salary:
+                option_spans = card.select(".option span")
+                for span in option_spans:
+                    text = span.get_text(strip=True)
+                    if not experience and ("신입" in text or "경력" in text or "무관" in text):
+                        experience = text
+                    elif not salary and ("만원" in text or "연봉" in text):
+                        salary = text
             
-            # Deadline parsing
-            deadline_elem = card.select_one(".deadlines")
-            if not deadline_elem:
-                deadline_elem = card.select_one(".date")
-            
-            deadline = deadline_elem.get_text(strip=True) if deadline_elem else None
+            # Deadline Fallback
+            if not deadline:
+                deadline_elem = card.select_one(".deadlines")
+                if not deadline_elem:
+                    deadline_elem = card.select_one(".date")
+                
+                if deadline_elem:
+                    deadline = deadline_elem.get_text(strip=True)
 
             link_elem = card.select_one("a[href*='/Recruit/GI_Read/']")
 
-            if not title_elem or not company_elem or not link_elem:
+            if not link_elem:
                 continue
 
             href = link_elem.get("href", "")
@@ -76,7 +107,7 @@ class JobkoreaCrawler(BaseCrawler):
                     company=company_elem.get_text(strip=True),
                     url=full_url,
                     site=JobSite.JOBKOREA,
-                    location=location_elem.get_text(strip=True) if location_elem else None,
+                    location=location,
                     salary=salary,
                     experience=experience,
                     deadline=deadline,

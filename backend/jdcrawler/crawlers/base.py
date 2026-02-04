@@ -30,10 +30,13 @@ class BaseCrawler(ABC):
                 "--disable-infobars",
                 "--window-position=0,0",
                 "--ignore-certificate-errors",
+                "--disable-extensions",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
             ]
         )
         self.context = await self.browser.new_context(
-            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
             viewport={"width": 1920, "height": 1080}, # Fixed large viewport
             device_scale_factor=1,
             locale="ko-KR",
@@ -43,6 +46,7 @@ class BaseCrawler(ABC):
                 "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
             }
         )
+        await self.context.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -59,12 +63,34 @@ class BaseCrawler(ABC):
     async def fetch_page(
         self,
         url: str,
-        timeout: float = 90000,
+        timeout: float = 20000,
         wait_until: str = "domcontentloaded",
         wait_for_selector: str | None = None,
     ):
         await self.rate_limiter.acquire()
         page = await self.context.new_page()
+        # Manual Stealth Scripts
+        await page.add_init_script("""
+            // Webdriver property
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            });
+
+            // Chrome property
+            window.chrome = {
+                runtime: {}
+            };
+
+            // Plugins
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [1, 2, 3, 4, 5]
+            });
+
+            // Languages
+            Object.defineProperty(navigator, 'languages', {
+                get: () => ['ko-KR', 'ko', 'en-US', 'en']
+            });
+        """)
         try:
             await page.goto(url, timeout=timeout, wait_until=wait_until)
             

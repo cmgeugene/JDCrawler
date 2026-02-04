@@ -7,14 +7,16 @@ from jdcrawler.services.crawler import CrawlerService
 scheduler = AsyncIOScheduler()
 
 
+import os
+
 async def run_crawl_job():
     print("Starting scheduled crawl...")
     db = DatabaseClient()
     try:
         service = CrawlerService(db)
-        # Using headless=False because of strict bot detection on target sites.
-        # This will open browser windows on the server machine.
-        await service.crawl_all_active_keywords(headless=False)
+        # Use HEADLESS env var, default to True
+        headless = os.getenv("HEADLESS", "true").lower() == "true"
+        await service.crawl_all_active_keywords(headless=headless)
     except Exception as e:
         print(f"Scheduled crawl failed: {e}")
     finally:

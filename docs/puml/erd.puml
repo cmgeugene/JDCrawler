@@ -1,0 +1,30 @@
+@startuml
+entity "Job" {
+  *id : integer
+  --
+  site : string
+  title : string
+  company : string
+  url : string
+  ai_score : integer
+  ai_summary : text
+  is_bookmarked : boolean
+}
+
+entity "Keyword" {
+  *id : integer
+  --
+  keyword : string
+  is_active : boolean
+}
+
+entity "UserProfile" {
+  *id : integer
+  --
+  tech_stack : json
+  experience_years : integer
+  interest_keywords : json
+}
+
+Job }|--|| Keyword : "crawled for"
+@enduml

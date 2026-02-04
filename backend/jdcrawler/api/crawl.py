@@ -30,6 +30,8 @@ def get_db(request: Request):
     return request.app.state.db
 
 
+import os
+
 @router.post("")
 async def crawl_site(request: CrawlRequest, http_request: Request):
     db = get_db(http_request)
@@ -37,8 +39,8 @@ async def crawl_site(request: CrawlRequest, http_request: Request):
 
     import traceback
     try:
-        # TODO: Headless config
-        jobs_crawled = await service.crawl_keyword(request.keyword, sites=[request.site], headless=False)
+        headless = os.getenv("HEADLESS", "true").lower() == "true"
+        jobs_crawled = await service.crawl_keyword(request.keyword, sites=[request.site], headless=headless)
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
@@ -61,7 +63,8 @@ async def crawl_all(http_request: Request, background_tasks: BackgroundTasks):
     
     async def _run_crawl():
         service = CrawlerService(db)
-        await service.crawl_all_active_keywords(headless=False)
+        headless = os.getenv("HEADLESS", "true").lower() == "true"
+        await service.crawl_all_active_keywords(headless=headless)
 
     background_tasks.add_task(_run_crawl)
     

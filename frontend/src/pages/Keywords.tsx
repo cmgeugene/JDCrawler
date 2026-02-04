@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getKeywords, createKeyword, deleteKeyword, crawlAll } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Trash2, Terminal, Activity, Loader2, AlertCircle, Search, Play, Zap } from "lucide-react";
+import { Trash2, Terminal, Activity, Loader2, AlertCircle, Search, Play } from "lucide-react";
 import type { Keyword } from "@/types";
 
 export default function Keywords() {

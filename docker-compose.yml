@@ -1,0 +1,29 @@
+services:
+  backend:
+    image: jscj0815/jdcrawler-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    shm_size: '2gb'
+    volumes:
+      - ./backend/data:/app/data
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:////app/data/jobs.db
+      - API_HOST=0.0.0.0
+      - HEADLESS=false
+    restart: always
+
+  frontend:
+    image: jscj0815/jdcrawler-frontend:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE=/api
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always

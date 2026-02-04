@@ -13,6 +13,11 @@ export interface Job {
   posted_at: string | null;
   is_bookmarked: boolean;
   created_at: string;
+  description?: string;
+  description_image_url?: string;
+  ai_status?: 'pending' | 'completed' | 'filtered' | 'failed';
+  ai_score?: number;
+  ai_summary?: string;
 }
 
 export interface Keyword {
@@ -31,7 +36,7 @@ export interface JobStatsResponse {
 }
 
 export interface TechSkill {
-  name: str;
+  name: string;
   level: string;
   description: string | null;
 }

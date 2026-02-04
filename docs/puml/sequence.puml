@@ -1,0 +1,41 @@
+@startuml
+actor Scheduler
+participant "CrawlerService" as Service
+participant "SiteCrawler" as Crawler
+participant "Database" as DB
+participant "AI Service" as AI
+
+== Crawling Cycle ==
+Scheduler -> Service: Trigger Crawl (Every 4h)
+activate Service
+Service -> DB: Get Active Keywords
+activate DB
+DB --> Service: [Keywords]
+deactivate DB
+
+loop For each Keyword
+    Service -> Crawler: crawl(keyword)
+    activate Crawler
+    Crawler -> ExternalSite: Fetch Results
+    ExternalSite --> Crawler: HTML/JSON
+    Crawler --> Service: [Jobs]
+    deactivate Crawler
+    Service -> DB: Save/Update Jobs
+end
+deactivate Service
+
+== User Triggered Analysis ==
+actor User
+participant "API Server" as API
+
+User -> API: Request AI Analysis (Job ID)
+activate API
+API -> DB: Get Job & Profile
+API -> AI: Send Prompt
+activate AI
+AI --> API: Analysis JSON
+deactivate AI
+API -> DB: Update Job Results
+API --> User: Return Result
+deactivate API
+@enduml
