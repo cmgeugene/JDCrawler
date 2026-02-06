@@ -57,6 +57,16 @@ class CrawlerService:
                                 details = await cr.extract_details(job_create.url)
                                 job_create.description = details.get("description")
                                 job_create.description_image_url = details.get("description_image_url")
+                                
+                                # Enrich missing fields if they were N/A or empty
+                                if not job_create.experience or job_create.experience == "N/A":
+                                    job_create.experience = details.get("experience")
+                                if not job_create.salary:
+                                    job_create.salary = details.get("salary")
+                                if not job_create.location:
+                                    job_create.location = details.get("location")
+                                if not job_create.deadline:
+                                    job_create.deadline = details.get("deadline")
                         
                         # 3. Phase 1: Rule-based filtering (If it's a new job or was updated)
                         if job_create.description:
@@ -89,12 +99,30 @@ class CrawlerService:
                         # 4. Save/Update in DB
                         if existing_job:
                             # Update missing fields
+                            did_update = False
                             if not existing_job.description and job_create.description:
                                 existing_job.description = job_create.description
                                 existing_job.description_image_url = job_create.description_image_url
                                 existing_job.ai_score = job_create.ai_score
                                 existing_job.ai_status = job_create.ai_status
                                 existing_job.ai_summary = job_create.ai_summary
+                                did_update = True
+                            
+                            # Also update metadata if missing
+                            if (not existing_job.experience or existing_job.experience == "N/A") and job_create.experience:
+                                existing_job.experience = job_create.experience
+                                did_update = True
+                            if not existing_job.salary and job_create.salary:
+                                existing_job.salary = job_create.salary
+                                did_update = True
+                            if not existing_job.location and job_create.location:
+                                existing_job.location = job_create.location
+                                did_update = True
+                            if not existing_job.deadline and job_create.deadline:
+                                existing_job.deadline = job_create.deadline
+                                did_update = True
+                                
+                            if did_update:
                                 self.db.jobs_session.commit()
                         else:
                             self.db.create_job(job_create)

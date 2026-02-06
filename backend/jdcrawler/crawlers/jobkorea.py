@@ -38,11 +38,14 @@ class JobkoreaCrawler(BaseCrawler):
             # Strategy 1: Parse using JobInfoItem (New UI)
             info_items = card.select("div[data-sentry-component='JobInfoItem']")
             for item in info_items:
-                # Expecting 2 direct child divs: Label and Value
-                divs = item.find_all("div", recursive=False)
-                if len(divs) >= 2:
-                    label = divs[0].get_text(strip=True)
-                    value = divs[1].get_text(strip=True)
+                # Find the label span (usually Gray700 color)
+                label_span = item.select_one("span[class*='Typography_color_gray700']")
+                # Find the value span (usually Gray900 color)
+                value_span = item.select_one("span[class*='Typography_color_gray900']")
+                
+                if label_span and value_span:
+                    label = label_span.get_text(strip=True)
+                    value = value_span.get_text(strip=True)
                     
                     if "경력" in label:
                         experience = value
@@ -125,6 +128,42 @@ class JobkoreaCrawler(BaseCrawler):
             description = ""
             image_url = None
             
+            # Additional fields from detail page
+            extra_info = {}
+            
+            # Parse QualificationItem (New UI in main body)
+            qual_items = soup.select("div[data-sentry-component='QualificationItem']")
+            for item in qual_items:
+                label_span = item.select_one("span[class*='Typography_color_gray700']")
+                if label_span:
+                    label = label_span.get_text(strip=True)
+                    # For value, we might have multiple spans or a specific color
+                    # Strategy: get all text except label
+                    value = item.get_text(strip=True).replace(label, "", 1).strip()
+                    
+                    if "경력" in label:
+                        extra_info["experience"] = value
+                    elif "학력" in label:
+                        extra_info["education"] = value # Not in model yet, but useful
+            
+            # Parse JobInfoItem (Summary/Sidebar in detail page)
+            info_items = soup.select("div[data-sentry-component='JobInfoItem']")
+            for item in info_items:
+                label_span = item.select_one("span[class*='Typography_color_gray700']")
+                value_span = item.select_one("span[class*='Typography_color_gray900']")
+                if label_span and value_span:
+                    label = label_span.get_text(strip=True)
+                    value = value_span.get_text(strip=True)
+                    
+                    if "경력" in label and "experience" not in extra_info:
+                        extra_info["experience"] = value
+                    elif "급여" in label:
+                        extra_info["salary"] = value
+                    elif "근무지역" in label:
+                        extra_info["location"] = value
+                    elif "마감일" in label:
+                        extra_info["deadline"] = value
+
             # 1. Target the specific iframe identified by the user
             # Pattern: /Recruit/GI_Read_Comt_Ifrm or Title: 상세 모집 요강
             iframe = soup.select_one("iframe[src*='GI_Read_Comt_Ifrm']") or \
@@ -162,7 +201,8 @@ class JobkoreaCrawler(BaseCrawler):
 
             return {
                 "description": description,
-                "description_image_url": image_url
+                "description_image_url": image_url,
+                **extra_info
             }
         except Exception as e:
             print(f"Error extracting JobKorea details: {e}")
