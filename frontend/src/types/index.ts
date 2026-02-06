@@ -9,8 +9,9 @@ export interface Job {
   location: string | null;
   salary: string | null;
   experience: string | null;
-  deadline: string | null;
+  min_experience_years: number;
   posted_at: string | null;
+  deadline: string | null;
   is_bookmarked: boolean;
   is_hidden: boolean;
   created_at: string;
