@@ -112,6 +112,39 @@ class TestBookmarkAPI:
         assert response.status_code == 404
 
 
+class TestHiddenAPI:
+    def test_toggle_hidden(self, client_with_jobs):
+        # 1. Hide job 1
+        response = client_with_jobs.patch("/api/jobs/1/hidden")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_hidden"] is True
+
+        # 2. Check list - Job 1 should be gone
+        response = client_with_jobs.get("/api/jobs")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        ids = [j["id"] for j in data]
+        assert 1 not in ids
+
+        # 3. Unhide job 1
+        response = client_with_jobs.patch("/api/jobs/1/hidden")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_hidden"] is False
+
+        # 4. Check list - Job 1 should be back
+        response = client_with_jobs.get("/api/jobs")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 3
+
+    def test_toggle_hidden_not_found(self, client):
+        response = client.patch("/api/jobs/999/hidden")
+        assert response.status_code == 404
+
+
 class TestJobStatsAPI:
     def test_get_job_stats(self, client_with_jobs):
         response = client_with_jobs.get("/api/jobs/stats")

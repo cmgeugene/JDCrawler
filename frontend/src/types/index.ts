@@ -12,6 +12,7 @@ export interface Job {
   deadline: string | null;
   posted_at: string | null;
   is_bookmarked: boolean;
+  is_hidden: boolean;
   created_at: string;
   description?: string;
   description_image_url?: string;

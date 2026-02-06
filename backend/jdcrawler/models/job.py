@@ -35,6 +35,7 @@ class JobCreate(JobBase):
 class Job(JobBase):
     id: int
     is_bookmarked: bool = False
+    is_hidden: bool = False
     created_at: datetime
 
 

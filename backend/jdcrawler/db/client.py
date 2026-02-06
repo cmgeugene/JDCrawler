@@ -86,6 +86,7 @@ class DatabaseClient:
             posted_at=job_data.posted_at,
             deadline=job_data.deadline,
             is_bookmarked=False,
+            is_hidden=False,
             created_at=datetime.now(),
             description=job_data.description,
             description_image_url=job_data.description_image_url,
@@ -106,7 +107,7 @@ class DatabaseClient:
         limit: int = 100,
         offset: int = 0,
     ) -> list[Job]:
-        query = select(JobTable)
+        query = select(JobTable).where(JobTable.is_hidden == False)
 
         if search:
             query = query.where(
@@ -133,6 +134,15 @@ class DatabaseClient:
         if not job:
             raise ValueError(f"Job {job_id} not found")
         job.is_bookmarked = not job.is_bookmarked
+        self.jobs_session.commit()
+        self.jobs_session.refresh(job)
+        return self._job_table_to_model(job)
+
+    def toggle_hidden(self, job_id: int) -> Job:
+        job = self.jobs_session.get(JobTable, job_id)
+        if not job:
+            raise ValueError(f"Job {job_id} not found")
+        job.is_hidden = not job.is_hidden
         self.jobs_session.commit()
         self.jobs_session.refresh(job)
         return self._job_table_to_model(job)
@@ -254,6 +264,7 @@ class DatabaseClient:
             posted_at=job.posted_at.date() if job.posted_at else None,
             deadline=job.deadline,
             is_bookmarked=job.is_bookmarked,
+            is_hidden=job.is_hidden,
             created_at=job.created_at,
             description=job.description,
             description_image_url=job.description_image_url,

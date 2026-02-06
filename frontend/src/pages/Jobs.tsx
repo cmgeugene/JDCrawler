@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getJobs, toggleBookmark } from "@/lib/api";
+import { getJobs, toggleBookmark, hideJob } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Search, MapPin, Building2, Bookmark, ExternalLink, ChevronLeft, ChevronRight, Loader2, Eye, Sparkles } from "lucide-react";
+import { Search, MapPin, Building2, Bookmark, ExternalLink, ChevronLeft, ChevronRight, Loader2, Eye, Sparkles, Trash2 } from "lucide-react";
 import { JobDetail } from "@/components/jobs/JobDetail";
 
 export default function Jobs() {
@@ -38,6 +38,13 @@ export default function Jobs() {
 
   const { mutate: handleToggleBookmark } = useMutation({
     mutationFn: toggleBookmark,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+  });
+
+  const { mutate: handleHideJob } = useMutation({
+    mutationFn: hideJob,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
@@ -193,9 +200,17 @@ export default function Jobs() {
                         >
                           <Bookmark className={cn("h-4 w-4", job.is_bookmarked && "fill-current")} />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleHideJob(job.id)}
+                          className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                         <Button 
                           variant="ghost" 
-                          size="icon" 
+                          size="icon"  
                           onClick={() => setSelectedJobId(job.id)}
                           className="h-8 w-8 hover:bg-muted transition-all opacity-0 group-hover:opacity-100"
                         >

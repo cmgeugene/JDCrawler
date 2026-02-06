@@ -24,6 +24,7 @@ class JobTable(Base):
     posted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     deadline: Mapped[str | None] = mapped_column(String(100), nullable=True)
     is_bookmarked: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_hidden: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     # AI Analysis fields

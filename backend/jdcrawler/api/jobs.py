@@ -47,3 +47,12 @@ def toggle_bookmark(request: Request, job_id: int):
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return db.toggle_bookmark(job_id)
+
+
+@router.patch("/{job_id}/hidden", response_model=JobResponse)
+def toggle_hidden(request: Request, job_id: int):
+    db = get_db(request)
+    job = db.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return db.toggle_hidden(job_id)
